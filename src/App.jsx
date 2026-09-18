@@ -21,14 +21,31 @@ const columns = [
   { id: "done", title: "Done", accent: "teal" },
 ];
 
-const savedTasks = localStorage.getItem("kanban-tasks");
-const initialTasks = savedTasks ? JSON.parse(savedTasks) : [
+const defaultTasks = [
   { id: 1, title: "Map the onboarding flow", status: "todo", tag: "Research", priority: "High" },
   { id: 2, title: "Write release notes for v2.4", status: "todo", tag: "Content", priority: "Low" },
   { id: 3, title: "Review dashboard empty states", status: "progress", tag: "Design", priority: "Medium" },
   { id: 4, title: "Connect analytics events", status: "progress", tag: "Engineering", priority: "High" },
   { id: 5, title: "Ship navigation updates", status: "done", tag: "Engineering", priority: "Low" },
 ];
+
+const getInitialTasks = () => {
+  try {
+    if (typeof window === "undefined") {
+      return defaultTasks;
+    }
+
+    const savedTasks = window.localStorage.getItem("kanban-tasks");
+    if (!savedTasks) {
+      return defaultTasks;
+    }
+
+    const parsedTasks = JSON.parse(savedTasks);
+    return Array.isArray(parsedTasks) ? parsedTasks : defaultTasks;
+  } catch (error) {
+    return defaultTasks;
+  }
+};
 
 function SortableTaskCard({ task, onDelete }) {
   const {
@@ -74,7 +91,7 @@ function SortableTaskCard({ task, onDelete }) {
 }
 
 function App() {
-  const [tasks, setTasks] = useState(initialTasks);
+  const [tasks, setTasks] = useState(() => getInitialTasks());
   const [newTask, setNewTask] = useState("");
   const [newPriority, setNewPriority] = useState("Medium");
   const [searchTerm, setSearchTerm] = useState("");
@@ -82,7 +99,13 @@ function App() {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   useEffect(() => {
-    localStorage.setItem("kanban-tasks", JSON.stringify(tasks));
+    try {
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("kanban-tasks", JSON.stringify(tasks));
+      }
+    } catch (error) {
+      console.error("Failed to save tasks to localStorage:", error);
+    }
   }, [tasks]);
 
   const addTask = (event) => {
