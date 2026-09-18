@@ -3,5 +3,5 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/kanban_board/',
+  base: process.env.VERCEL ? '/' : '/kanban_board/',
 })
